@@ -8,10 +8,11 @@ Copyright (c) 1999-2004, Ng Pheng Siong. All rights reserved.
 Portions created by Open Source Applications Foundation (OSAF) are
 Copyright (C) 2004-2007 OSAF. All Rights Reserved.
 
-Copyright 2008-2009 Heikki Toivonen. All rights reserved.
+Copyright 2008-2011 Heikki Toivonen. All rights reserved.
 """
 
 import os, sys
+import platform
 try:
     from setuptools import setup
     from setuptools.command import build_ext
@@ -50,12 +51,15 @@ class _M2CryptoBuildExt(build_ext.build_ext):
         build_ext.build_ext.finalize_options(self)
 
         opensslIncludeDir = os.path.join(self.openssl, 'include')
+        # CentOS 6 has its own openssl-devel layout.
+        opensslIncludeDir2 = os.path.join(opensslIncludeDir, 'openssl')
         opensslLibraryDir = os.path.join(self.openssl, 'lib')
         
         self.swig_opts = ['-I%s' % i for i in self.include_dirs + \
-                          [opensslIncludeDir]]
+                          [opensslIncludeDir, opensslIncludeDir2]]
         self.swig_opts.append('-includeall')
-        #self.swig_opts.append('-D__i386__') # Uncomment for early OpenSSL 0.9.7 versions, or on Fedora Core if build fails
+        self.swig_opts.append('-D__%s__' % platform.machine())
+        #self.swig_opts.append('-D__x86_64__') # Uncomment for early OpenSSL 0.9.7 versions, or on Fedora Core if build fails
         #self.swig_opts.append('-DOPENSSL_NO_EC') # Try uncommenting if you can't build with EC disabled
         
         self.include_dirs += [os.path.join(self.openssl, opensslIncludeDir),
