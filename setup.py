@@ -21,6 +21,13 @@ except ImportError:
     from distutils.command import build_ext
 
 from distutils.core import Extension
+from distutils.core import Command as _Command
+def monkey_patched_reinitialize_command(self, name, *args, **kwargs):
+    # There are something messed up in distutils (Python 2.6) where 
+    # reinitialize_command wipes out all the settings loaded from setup.cfg
+    # See: https://bitbucket.org/tarek/distribute/issue/185
+    pass
+_Command.reinitialize_command = monkey_patched_reinitialize_command
 
 
 class _M2CryptoBuildExt(build_ext.build_ext):
