@@ -56,6 +56,7 @@ class _M2CryptoBuildExt(build_ext.build_ext):
         include file and library linking options'''
 
         build_ext.build_ext.finalize_options(self)
+        self.inplace = 1
 
         opensslIncludeDir = os.path.join(self.openssl, 'include')
         # CentOS 6 has its own openssl-devel layout.
