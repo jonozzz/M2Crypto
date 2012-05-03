@@ -21,13 +21,6 @@ except ImportError:
     from distutils.command import build_ext
 
 from distutils.core import Extension
-from distutils.core import Command as _Command
-def monkey_patched_reinitialize_command(self, name, *args, **kwargs):
-    # There are something messed up in distutils (Python 2.6) where 
-    # reinitialize_command wipes out all the settings loaded from setup.cfg
-    # See: https://bitbucket.org/tarek/distribute/issue/185
-    pass
-_Command.reinitialize_command = monkey_patched_reinitialize_command
 
 
 class _M2CryptoBuildExt(build_ext.build_ext):
@@ -35,6 +28,23 @@ class _M2CryptoBuildExt(build_ext.build_ext):
     include_dirs settings made at the command line or in a setup.cfg file'''
     user_options = build_ext.build_ext.user_options + \
             [('openssl=', 'o', 'Prefix for openssl installation location')]
+
+    def __init__(*args, **kwargs):
+        build_ext.build_ext.__init__(*args, **kwargs)
+
+        from distutils.core import Command as _Command
+        # There are something messed up in distutils (Python 2.6) where 
+        # reinitialize_command wipes out all the settings loaded from setup.cfg
+        # See: https://bitbucket.org/tarek/distribute/issue/185
+        def monkey_patched_reinitialize_command(self, command, reinit_subcommands=0, **kw):
+            cmd = self.distribution.reinitialize_command(command, reinit_subcommands)
+            for (name, (source, value)) in self.distribution.get_option_dict(command).items():
+                setattr(cmd,name,value)    # update command with keywords
+
+            for k,v in kw.items():
+                setattr(cmd,k,v)    # update command with keywords
+            return cmd
+        _Command.reinitialize_command = monkey_patched_reinitialize_command
 
     def initialize_options(self):
         '''Overload to enable custom openssl settings to be picked up'''
